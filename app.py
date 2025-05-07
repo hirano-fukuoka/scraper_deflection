@@ -15,8 +15,8 @@ st.title("スクレーパ押し付け力・摩耗寿命予測アプリ（押し�
 with st.sidebar:
     st.header("📥 スクレーパ条件")
 
-    L_mm = st.number_input("スクレーパ幅 b [mm]（たわみ方向）", min_value=1.0, value=20.0)
-    b_mm = st.number_input("スクレーパ長さ L [mm]（固定長）", min_value=1.0, value=140.0)
+    b_mm = st.number_input("スクレーパ幅 b [mm]（たわみ方向）", min_value=1.0, value=20.0)
+    L_mm = st.number_input("スクレーパ長さ L [mm]（固定長）", min_value=1.0, value=140.0)
     h_mm = st.number_input("スクレーパ厚さ h [mm]", min_value=0.1, value=1.5)
     # 材料選択と自動ヤング率設定
     material_options = {

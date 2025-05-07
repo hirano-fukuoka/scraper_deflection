@@ -7,18 +7,18 @@ import matplotlib
 matplotlib.rcParams['font.family'] = 'Noto Sans CJK JP'
 
 st.set_page_config(page_title="スクレーパ摩耗寿命予測", layout="wide")
-st.title("スクレーパ押し付け力・摩耗寿命予測アプリ（押し付け力 < 0.1Nが寿命）")
+st.title("スクレーパ押し付け力・摩耗寿命予測アプリ（押し付け力が指定値を下回ると寿命）")
 
 # ====== 入力（全てサイドバー） ======
 with st.sidebar:
     st.header("📥 スクレーパ条件")
 
-    # 寸法
-    b_mm = st.number_input("スクレーパ長さ L [mm]", min_value=1.0, value=140.0)
-    L_mm = st.number_input("スクレーパ幅 b [mm]", min_value=1.0, value=20.0)
+    # 寸法（たわみ方向が幅方向）
+    b_mm = st.number_input("スクレーパ幅 b [mm]（たわみ方向）", min_value=1.0, value=20.0)
+    L_mm = st.number_input("スクレーパ長さ L [mm]（固定長）", min_value=1.0, value=140.0)
     h_mm = st.number_input("スクレーパ厚さ h [mm]", min_value=0.1, value=1.5)
     E_GPa = st.number_input("ヤング率 E [GPa]", min_value=0.01, value=0.55)
-    max_delta_mm = st.number_input("最大変形量 δ_max [mm]", min_value=0.01, value=0.5)
+    max_delta_mm = st.number_input("最大変形量 δ_max [mm]", min_value=0.1, value=0.5)
 
     st.markdown("---")
 
@@ -34,7 +34,8 @@ with st.sidebar:
     st.markdown("---")
 
     s_mm = st.number_input("総移動距離の仮定値 [mm]", min_value=1.0, value=10000.0)
-    move_per_cycle = st.number_input("1chあたりの移動量 [mm]", min_value=0.1, value=2000.0)
+    move_per_cycle = st.number_input("1chあたりの移動量 [mm]", min_value=0.1, value=100.0)
+    F_limit = st.number_input("押し付け力の下限値 [N]", min_value=0.01, value=0.1)
 
 # ====== 単位変換・初期定義 ======
 L = L_mm / 1000
@@ -47,8 +48,7 @@ I = (b * h**3) / 12
 # ====== 初期押し付け力（F0） ======
 F0 = (3 * E * I * delta) / (L**3)
 
-# ====== 押し付け力0.5Nになる摩耗厚さの計算 ======
-F_limit = 0.5
+# ====== 指定下限押し付け力になる摩耗厚さの計算 ======
 if F0 > F_limit:
     h_new = h * (F_limit / F0) ** (1/3)
     delta_h = h - h_new
@@ -76,7 +76,7 @@ else:
 # ====== グラフ表示 ======
 st.subheader("📈 初期押し付け力 vs 厚み")
 st.write(f"📌 初期押し付け力: **{F0:.3f} N**")
-st.write(f"📉 厚さが約 **{delta_h*1000:.3f} mm** 減少すると、押し付け力が 0.5N に低下します。")
+st.write(f"📉 厚さが約 **{delta_h*1000:.3f} mm** 減少すると、押し付け力が {F_limit:.2f}N に低下します。")
 
 # ====== 除去能力の参考表示 ======
 st.markdown("### 📘 押し付け力と除去能力の参考")
@@ -98,4 +98,4 @@ if np.isfinite(s_life):
     st.success(f"📏 推定寿命距離: {s_life:,.0f} mm（= {s_life/1000:.2f} m）")
     st.success(f"🔄 推定寿命: 約 {ch_life:,.0f} ch（1ch = {move_per_cycle:.1f} mm）")
 else:
-    st.warning("押し付け力がすでに 0.5N 以下です。寿命条件に達しています。")
+    st.warning(f"押し付け力がすでに {F_limit:.2f}N 以下です。寿命条件に達しています。")

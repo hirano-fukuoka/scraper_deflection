@@ -6,87 +6,85 @@ import matplotlib
 # 日本語フォント設定
 matplotlib.rcParams['font.family'] = 'Noto Sans CJK JP'
 
-st.set_page_config(page_title="スクレーパ摩耗予測", layout="wide")
-st.title("スクレーパ押し付け力・摩耗寿命予測アプリ")
+st.set_page_config(page_title="スクレーパ摩耗寿命予測", layout="wide")
+st.title("スクレーパ押し付け力・摩耗寿命予測アプリ（押し付け力 < 0.1Nが寿命）")
 
-# ======= 🌟 入力：すべてサイドバーに配置 =======
+# ====== 入力（全てサイドバー） ======
 with st.sidebar:
-    st.header("📥 入力パラメータ")
+    st.header("📥 スクレーパ条件")
 
-    # 幾何形状
-    L_mm = st.number_input("スクレーパ長さ L [mm]", min_value=1.0, value=30.0)
-    b_mm = st.number_input("スクレーパ幅 b [mm]", min_value=1.0, value=10.0)
-    h_mm = st.number_input("スクレーパ厚さ h [mm]", min_value=0.1, value=3.0)
+    # 寸法
+    L_mm = st.number_input("スクレーパ長さ L [mm]", min_value=1.0, value=140.0)
+    b_mm = st.number_input("スクレーパ幅 b [mm]", min_value=1.0, value=20.0)
+    h_mm = st.number_input("スクレーパ厚さ h [mm]", min_value=0.1, value=1.5)
     E_GPa = st.number_input("ヤング率 E [GPa]", min_value=0.01, value=0.55)
-    max_delta_mm = st.number_input("最大変形量 δ_max [mm]", min_value=0.1, value=2.0)
+    max_delta_mm = st.number_input("最大変形量 δ_max [mm]", min_value=0.1, value=0.5)
 
     st.markdown("---")
 
-    # 材料選択と摩耗特性
+    # 材料
     material_options = {
         "PTFE（テフロン）": {"K": 1e-3, "H": 50},
         "ウレタン": {"K": 2e-4, "H": 70},
-        "ゴム系（NBR）": {"K": 1e-4, "H": 40},
-        "金属（参考）": {"K": 1e-5, "H": 300}
+        "ゴム系（NBR）": {"K": 1e-4, "H": 40}
     }
     material = st.selectbox("材料を選択", list(material_options.keys()))
-    apply_edge_correction = st.checkbox("C0.3エッジ補正（摩耗係数を1.5倍）", value=True)
+    apply_edge_correction = st.checkbox("C0.3エッジ補正（摩耗係数 ×1.5）", value=True)
 
     st.markdown("---")
 
-    # 摩耗関連
-    s_mm = st.number_input("総移動距離（累積）[mm]", min_value=1.0, value=10000.0)
+    s_mm = st.number_input("総移動距離の仮定値 [mm]", min_value=1.0, value=10000.0)
     move_per_cycle = st.number_input("1chあたりの移動量 [mm]", min_value=0.1, value=100.0)
-    V_limit = st.number_input("許容摩耗体積 V_limit [mm³]", min_value=0.1, value=10.0)
 
-# ======= 単位変換と力計算 =======
+# ====== 単位変換・初期定義 ======
 L = L_mm / 1000
 b = b_mm / 1000
 h = h_mm / 1000
 E = E_GPa * 1e9
+delta = max_delta_mm / 1000
 I = (b * h**3) / 12
-delta_vals = np.linspace(0, max_delta_mm / 1000, 100)
-force_vals = (3 * E * I * delta_vals) / (L**3)
-F_latest = force_vals[-1]
 
-# ======= 材料プロパティ読み込み =======
+# ====== 初期押し付け力（F0） ======
+F0 = (3 * E * I * delta) / (L**3)
+
+# ====== 押し付け力0.1Nになる摩耗厚さの計算 ======
+F_limit = 0.1
+if F0 > F_limit:
+    h_new = h * (F_limit / F0) ** (1/3)
+    delta_h = h - h_new
+    V_limit = L * b * delta_h * 1e9  # m³ → mm³
+else:
+    h_new = h
+    delta_h = 0
+    V_limit = 0
+
+# ====== 材料特性読み込み ======
 K = material_options[material]["K"]
 H = material_options[material]["H"]
 if apply_edge_correction:
     K *= 1.5
 
-# ======= グラフ =======
-st.subheader("📈 押し付け力 vs 変形量")
-fig, ax = plt.subplots()
-ax.plot(delta_vals * 1000, force_vals, color="blue")
-ax.set_xlabel("変形量 δ [mm]")
-ax.set_ylabel("押し付け力 F [N]")
-ax.set_title("スクレーパ押し付け力 vs 変形量")
-ax.grid(True)
-st.pyplot(fig, use_container_width=True)
-
-# ======= 📘 除去対象動的表示 =======
-st.subheader("📘 除去対象の判定（押し付け力に基づく）")
-
-if F_latest < 0.1:
-    st.info("🟦 除去対象：微粉・ホコリ（軽粉体）")
-elif F_latest < 0.5:
-    st.info("🟩 除去対象：標準的な粉末（アルミ、酸化物など）")
-elif F_latest < 2.0:
-    st.info("🟨 除去対象：小粒異物、湿気を含む付着物など")
-else:
-    st.info("🟥 除去対象：強固な付着異物、樹脂破片など")
-
-# ======= 🛠️ 摩耗・寿命 =======
-st.subheader("🛠️ 摩耗量・寿命予測")
-
-V_wear = (K * F_latest * s_mm) / H
-st.write(f"📊 推定摩耗量: **{V_wear:.3f} mm³**")
-
-if F_latest > 0:
-    s_life = (V_limit * H) / (K * F_latest)
+# ====== 摩耗量と寿命計算 ======
+V_wear = (K * F0 * s_mm) / H
+if V_limit > 0:
+    s_life = (V_limit * H) / (K * F0)
     ch_life = s_life / move_per_cycle
+else:
+    s_life = float('inf')
+    ch_life = float('inf')
+
+# ====== グラフ表示 ======
+st.subheader("📈 初期押し付け力 vs 厚み")
+st.write(f"📌 初期押し付け力: **{F0:.3f} N**")
+st.write(f"📉 厚さが約 **{delta_h*1000:.3f} mm** 減少すると、押し付け力が 0.1N に低下します。")
+
+# ====== 摩耗・寿命出力 ======
+st.subheader("🛠️ 摩耗寿命予測")
+st.write(f"📏 摩耗限界体積: **{V_limit:.3f} mm³**")
+st.write(f"📊 摩耗量（仮定移動距離 s = {s_mm:,.0f} mm）: **{V_wear:.3f} mm³**")
+
+if np.isfinite(s_life):
     st.success(f"📏 推定寿命距離: {s_life:,.0f} mm（= {s_life/1000:.2f} m）")
     st.success(f"🔄 推定寿命: 約 {ch_life:,.0f} ch（1ch = {move_per_cycle:.1f} mm）")
 else:
-    st.warning("押し付け力が0 Nのため、寿命は無限と見なされます。")
+    st.warning("押し付け力がすでに 0.1N 以下です。寿命条件に達しています。")

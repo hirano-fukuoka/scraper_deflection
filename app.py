@@ -60,7 +60,7 @@ def compute_life(delta):
     if V_limit <= 0:
         return -1e-6
     s_life = (V_limit * H) / (K * F)
-    return -s_life
+    return -s_life  # 目的は寿命最大化（最大化→マイナスを返す）
 
 # === 安全ガード：最大変形量が極端に小さい場合は最適化をスキップ ===
 if max_delta_mm / 1000 > 0.001:
@@ -75,11 +75,11 @@ if max_delta_mm / 1000 > 0.001:
 else:
     opt_delta = opt_F = delta_h_opt = V_limit_opt = s_life_opt = ch_life_opt = float('nan')
 
-st.subheader("🎯 寿命を最大化する最適押し付け量")
+st.subheader("🎯 寿命を最大化する最大たわみ量の最適化")
 if np.isnan(opt_F):
     st.warning("※ 最大変形量が小さすぎるため最適化計算はスキップされました。")
 else:
-    st.write(f"🔧 最適たわみ量: **{opt_delta*1000:.3f} mm**")
+    st.write(f"🔧 最大たわみ量（寿命最長）: **{opt_delta*1000:.3f} mm**")
     st.write(f"🔧 最適押し付け力: **{opt_F:.3f} N**")
     st.success(f"🧭 最大寿命距離: {s_life_opt:,.0f} mm ≈ {s_life_opt/1000:.2f} m")
     st.success(f"🧭 最大寿命: 約 {ch_life_opt:,.0f} ch")

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 # フォント設定（日本語対応）
-matplotlib.rcParams['font.family'] = 'Noto Sans CJK JP'
+matplotlib.rcParams['font.family'] = 'MS Gothic'
 
 st.title("スクレーパ押し付け力 vs 変形量（片持ち梁モデル）")
 

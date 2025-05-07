@@ -18,7 +18,8 @@ with st.sidebar:
     L_mm = st.number_input("スクレーパ幅 b [mm]（たわみ方向）", min_value=1.0, value=20.0)
     b_mm = st.number_input("スクレーパ長さ L [mm]（固定長）", min_value=1.0, value=140.0)
     h_mm = st.number_input("スクレーパ厚さ h [mm]", min_value=0.1, value=1.5)
-    E_GPa = st.number_input("ヤング率 E [GPa]", min_value=0.01, value=0.55)
+    default_E_map = {"PTFE（テフロン）": 0.55, "ウレタン": 0.025, "ゴム系（NBR）": 0.01}
+E_GPa = st.number_input("ヤング率 E [GPa]", min_value=0.01, value=default_E_map.get(material, 0.55))
     max_delta_mm = st.number_input("最大変形量 δ_max [mm]", min_value=0.1, value=0.5)
 
     st.markdown("---")

@@ -96,4 +96,127 @@ if V_limit > 0:
 else:
     s_life = float('inf')
     ch_life = float('inf')
+
+# ====== 結果表示 ======
+st.subheader("📈 Initial Contact Force and Wear Prediction")
+st.write(f"Initial contact force: **{F0:.3f} N**")
+st.write(f"Allowable wear thickness loss: **{delta_h * 1000:.3f} mm**")
+st.write(f"Allowable wear volume: **{V_limit:.3f} mm³**")
+st.write(f"Wear volume after {s_mm:.0f} mm travel: **{V_wear:.3f} mm³**")
+
+if np.isfinite(s_life):
+    st.success(f"Estimated lifetime distance: **{s_life:,.0f} mm** ({s_life / 1000:.2f} m)")
+    st.success(f"Estimated lifetime: **{ch_life:,.0f} ch** (1ch = {move_per_cycle:.1f} mm)")
+else:
+    st.warning(f"Initial force is already below the limit ({F_limit:.2f} N). Lifetime condition reached.")
+
+# ====== 最適たわみ量による最大寿命 ======
+st.subheader("🎯 Optimal Deflection for Maximum Lifetime")
+if np.isnan(opt_F):
+    st.warning("Max deflection too small for optimization.")
+else:
+    st.write(f"Optimal deflection: **{opt_delta * 1000:.3f} mm**")
+    st.write(f"Optimal contact force: **{opt_F:.3f} N**")
+    st.success(f"Maximum lifetime distance: **{s_life_opt:,.0f} mm** ({s_life_opt / 1000:.2f} m)")
+    st.success(f"Maximum lifetime: **{ch_life_opt:,.0f} ch**")
+
+# ====== グラフ描画：たわみ量 vs 押し付け力、寿命 ======
+st.subheader("📊 Deflection vs Contact Force")
+delta_vals = np.linspace(0.001, max_delta_mm, 100) / 1000
+force_vals = (3 * E * I * delta_vals) / (L**3)
+
+fig, ax = plt.subplots()
+ax.plot(delta_vals * 1000, force_vals, label="Contact Force F [N]", color='blue')
+ax.axhline(F_limit, color='red', linestyle='--', label="Force Limit")
+ax.set_xlabel("Deflection δ [mm]")
+ax.set_ylabel("Contact Force F [N]")
+ax.grid(True)
+ax.legend()
+st.pyplot(fig)
+
+st.subheader("📈 Deflection vs Wear Life")
+s_life_curve = []
+for d in delta_vals:
+    F = (3 * E * I * d) / (L**3)
+    if F <= F_limit:
+        s_life_curve.append(0)
+    else:
+        h_tmp = h * (F_limit / F)**(1/3)
+        delta_h_tmp = h - h_tmp
+        V_limit_tmp = L * b * delta_h_tmp * 1e9
+        if V_limit_tmp <= 0:
+            s_life_curve.append(0)
+        else:
+            s_life_tmp = (V_limit_tmp * H) / (K * F)
+            s_life_curve.append(s_life_tmp)
+
+fig2, ax2 = plt.subplots()
+ax2.plot(delta_vals * 1000, s_life_curve, label="Wear Life [mm]", color='green')
+ax2.set_xlabel("Deflection δ [mm]")
+ax2.set_ylabel("Wear Life Distance [mm]")
+ax2.grid(True)
+ax2.legend()
+st.pyplot(fig2)
+
+st.subheader("📈 Contact Force vs Wear Life")
+force_vals_valid = []
+s_life_force_curve = []
+for d in delta_vals:
+    F = (3 * E * I * d) / (L**3)
+    if F <= F_limit:
+        continue
+    h_tmp = h * (F_limit / F)**(1/3)
+    delta_h_tmp = h - h_tmp
+    V_limit_tmp = L * b * delta_h_tmp * 1e9
+    if V_limit_tmp <= 0:
+        continue
+    s_life_tmp = (V_limit_tmp * H) / (K * F)
+    force_vals_valid.append(F)
+    s_life_force_curve.append(s_life_tmp)
+
+fig3, ax3 = plt.subplots()
+ax3.plot(force_vals_valid, s_life_force_curve, label="Wear Life [mm]", color='purple')
+ax3.set_xlabel("Contact Force F [N]")
+ax3.set_ylabel("Wear Life Distance [mm]")
+ax3.grid(True)
+ax3.legend()
+st.pyplot(fig3)
+
+# ====== テキスト出力 ======
+st.subheader("📄 Export Results as Text")
+text_output = io.StringIO()
+text_output.write("[Wear Prediction Result]
+")
+text_output.write(f"Material: {material}
+")
+text_output.write(f"Initial Contact Force: {F0:.3f} N
+")
+text_output.write(f"Wear Limit Thickness Loss: {delta_h*1000:.3f} mm
+")
+text_output.write(f"Wear Limit Volume: {V_limit:.3f} mm³
+")
+text_output.write(f"Wear Volume at {s_mm} mm Travel: {V_wear:.3f} mm³
+")
+text_output.write(f"Estimated Lifetime Distance: {s_life:,.0f} mm ({s_life/1000:.2f} m)
+")
+text_output.write(f"Estimated Lifetime: {ch_life:,.0f} ch
+")
+text_output.write("
+[Optimal Conditions]
+")
+text_output.write(f"Optimal Deflection: {opt_delta*1000:.3f} mm
+")
+text_output.write(f"Optimal Force: {opt_F:.3f} N
+")
+text_output.write(f"Max Lifetime Distance: {s_life_opt:,.0f} mm ({s_life_opt/1000:.2f} m)
+")
+text_output.write(f"Max Lifetime: {ch_life_opt:,.0f} ch
+")
+
+st.download_button(
+    label="📥 Download Result as .txt",
+    data=text_output.getvalue(),
+    file_name="scraper_life_result.txt",
+    mime="text/plain"
+)
     

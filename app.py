@@ -18,7 +18,7 @@ with st.sidebar:
     L_mm = st.number_input("スクレーパ幅 b [mm]", min_value=1.0, value=20.0)
     h_mm = st.number_input("スクレーパ厚さ h [mm]", min_value=0.1, value=1.5)
     E_GPa = st.number_input("ヤング率 E [GPa]", min_value=0.01, value=0.55)
-    max_delta_mm = st.number_input("最大変形量 δ_max [mm]", min_value=0.1, value=0.5)
+    max_delta_mm = st.number_input("最大変形量 δ_max [mm]", min_value=0.01, value=0.5)
 
     st.markdown("---")
 
@@ -34,7 +34,7 @@ with st.sidebar:
     st.markdown("---")
 
     s_mm = st.number_input("総移動距離の仮定値 [mm]", min_value=1.0, value=10000.0)
-    move_per_cycle = st.number_input("1chあたりの移動量 [mm]", min_value=0.1, value=100.0)
+    move_per_cycle = st.number_input("1chあたりの移動量 [mm]", min_value=0.1, value=2000.0)
 
 # ====== 単位変換・初期定義 ======
 L = L_mm / 1000
@@ -76,7 +76,7 @@ else:
 # ====== グラフ表示 ======
 st.subheader("📈 初期押し付け力 vs 厚み")
 st.write(f"📌 初期押し付け力: **{F0:.3f} N**")
-st.write(f"📉 厚さが約 **{delta_h*1000:.3f} mm** 減少すると、押し付け力が 0.1N に低下します。")
+st.write(f"📉 厚さが約 **{delta_h*1000:.3f} mm** 減少すると、押し付け力が 0.5N に低下します。")
 
 # ====== 除去能力の参考表示 ======
 st.markdown("### 📘 押し付け力と除去能力の参考")
@@ -98,4 +98,4 @@ if np.isfinite(s_life):
     st.success(f"📏 推定寿命距離: {s_life:,.0f} mm（= {s_life/1000:.2f} m）")
     st.success(f"🔄 推定寿命: 約 {ch_life:,.0f} ch（1ch = {move_per_cycle:.1f} mm）")
 else:
-    st.warning("押し付け力がすでに 0.1N 以下です。寿命条件に達しています。")
+    st.warning("押し付け力がすでに 0.5N 以下です。寿命条件に達しています。")

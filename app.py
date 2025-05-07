@@ -98,27 +98,27 @@ else:
     ch_life = float('inf')
 
 # ====== 結果表示 ======
-st.subheader("📈 Initial Contact Force and Wear Prediction")
-st.write(f"Initial contact force: **{F0:.3f} N**")
-st.write(f"Allowable wear thickness loss: **{delta_h * 1000:.3f} mm**")
-st.write(f"Allowable wear volume: **{V_limit:.3f} mm³**")
-st.write(f"Wear volume after {s_mm:.0f} mm travel: **{V_wear:.3f} mm³**")
+st.subheader("📈 初期押し付け力と摩耗予測")
+st.write(f"初期押し付け力: **{F0:.3f} N**")
+st.write(f"許容摩耗厚さ: **{delta_h * 1000:.3f} mm**")
+st.write(f"許容摩耗体積: **{V_limit:.3f} mm³**")
+st.write(f"総移動距離 {s_mm:.0f} mm に対する摩耗量: **{V_wear:.3f} mm³**")
 
 if np.isfinite(s_life):
-    st.success(f"Estimated lifetime distance: **{s_life:,.0f} mm** ({s_life / 1000:.2f} m)")
-    st.success(f"Estimated lifetime: **{ch_life:,.0f} ch** (1ch = {move_per_cycle:.1f} mm)")
+    st.success(f"推定寿命距離: **{s_life:,.0f} mm** （{s_life / 1000:.2f} m）")
+    st.success(f"推定寿命: **{ch_life:,.0f} ch**（1ch = {move_per_cycle:.1f} mm）")
 else:
-    st.warning(f"Initial force is already below the limit ({F_limit:.2f} N). Lifetime condition reached.")
+    st.warning(f"初期押し付け力が下限（{F_limit:.2f} N）を下回っています。すでに寿命条件に達しています。")
 
 # ====== 最適たわみ量による最大寿命 ======
-st.subheader("🎯 Optimal Deflection for Maximum Lifetime")
+st.subheader("🎯 寿命最大化のための最適たわみ量")
 if np.isnan(opt_F):
-    st.warning("Max deflection too small for optimization.")
+    st.warning("最大たわみ量が小さすぎるため、最適化を実行できません。")
 else:
-    st.write(f"Optimal deflection: **{opt_delta * 1000:.3f} mm**")
-    st.write(f"Optimal contact force: **{opt_F:.3f} N**")
-    st.success(f"Maximum lifetime distance: **{s_life_opt:,.0f} mm** ({s_life_opt / 1000:.2f} m)")
-    st.success(f"Maximum lifetime: **{ch_life_opt:,.0f} ch**")
+    st.write(f"最適たわみ量: **{opt_delta * 1000:.3f} mm**")
+    st.write(f"最適押し付け力: **{opt_F:.3f} N**")
+    st.success(f"最大寿命距離: **{s_life_opt:,.0f} mm** （{s_life_opt / 1000:.2f} m）")
+    st.success(f"最大寿命: **{ch_life_opt:,.0f} ch**")
 
 # ====== グラフ描画：たわみ量 vs 押し付け力、寿命 ======
 st.subheader("📊 Deflection vs Contact Force")
@@ -183,25 +183,26 @@ ax3.legend()
 st.pyplot(fig3)
 
 # ====== テキスト出力 ======
-st.subheader("📄 Export Results as Text")
+st.subheader("📄 結果をテキストで出力")
 text_output = io.StringIO()
-text_output.write("[Wear Prediction Result]\\n")
-text_output.write(f"Material: {material}\\n")
-text_output.write(f"Initial Contact Force: {F0:.3f} N\\n")
-text_output.write(f"Wear Limit Thickness Loss: {delta_h*1000:.3f} mm\\n")
-text_output.write(f"Wear Limit Volume: {V_limit:.3f} mm³\\n")
-text_output.write(f"Wear Volume at {s_mm} mm Travel: {V_wear:.3f} mm³\\n")
-text_output.write(f"Estimated Lifetime Distance: {s_life:,.0f} mm ({s_life/1000:.2f} m)\\n")
-text_output.write(f"Estimated Lifetime: {ch_life:,.0f} ch\\n")
-text_output.write("[Optimal Conditions]\\n")
-text_output.write(f"Optimal Deflection: {opt_delta*1000:.3f} mm\\n")
-text_output.write(f"Optimal Force: {opt_F:.3f} N\\n")
-text_output.write(f"Max Lifetime Distance: {s_life_opt:,.0f} mm ({s_life_opt/1000:.2f} m)\\n")
-text_output.write(f"Max Lifetime: {ch_life_opt:,.0f} ch\\n")
+text_output.write("【摩耗寿命予測結果】\\n")
+text_output.write(f"材質: {material}\\n")
+text_output.write(f"初期押し付け力: {F0:.3f} N\\n")
+text_output.write(f"許容摩耗厚さ: {delta_h*1000:.3f} mm\\n")
+text_output.write(f"許容摩耗体積: {V_limit:.3f} mm³\\n")
+text_output.write(f"総移動距離 {s_mm} mm における摩耗量: {V_wear:.3f} mm³\\n")
+text_output.write(f"推定寿命距離: {s_life:,.0f} mm ({s_life/1000:.2f} m)\\n")
+text_output.write(f"推定寿命: {ch_life:,.0f} ch\\n")
+text_output.write("【最適条件】\\n")
+text_output.write(f"最適たわみ量: {opt_delta*1000:.3f} mm\\n")
+text_output.write(f"最適押し付け力: {opt_F:.3f} N\\n")
+text_output.write(f"最大寿命距離: {s_life_opt:,.0f} mm ({s_life_opt/1000:.2f} m)\\n")
+text_output.write(f"最大寿命: {ch_life_opt:,.0f} ch\\n")
 
 st.download_button(
 
-    label="📥 Download Result as .txt",
+
+    label="📥 結果を .txt でダウンロード",
     data=text_output.getvalue(),
     file_name="scraper_life_result.txt",
     mime="text/plain"

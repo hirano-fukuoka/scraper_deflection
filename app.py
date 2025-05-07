@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
+import io
 
 # 日本語フォント設定
 matplotlib.rcParams['font.family'] = 'Noto Sans CJK JP'
@@ -99,3 +100,36 @@ if np.isfinite(s_life):
     st.success(f"🔄 推定寿命: 約 {ch_life:,.0f} ch（1ch = {move_per_cycle:.1f} mm）")
 else:
     st.warning(f"押し付け力がすでに {F_limit:.2f}N 以下です。寿命条件に達しています。")
+
+# ====== 結果の出力（条件と結果をまとめたテキスト） ======
+st.subheader("📝 入力条件と結果の出力")
+output = io.StringIO()
+output.write("【入力条件】\n")
+output.write(f"スクレーパ幅 b: {b_mm} mm\n")
+output.write(f"スクレーパ長さ L: {L_mm} mm\n")
+output.write(f"スクレーパ厚さ h: {h_mm} mm\n")
+output.write(f"ヤング率 E: {E_GPa} GPa\n")
+output.write(f"最大変形量: {max_delta_mm} mm\n")
+output.write(f"材料: {material}（補正あり: {apply_edge_correction}）\n")
+output.write(f"総移動距離: {s_mm} mm\n")
+output.write(f"1ch移動量: {move_per_cycle} mm\n")
+output.write(f"押し付け力下限値: {F_limit:.2f} N\n\n")
+
+output.write("【計算結果】\n")
+output.write(f"初期押し付け力: {F0:.3f} N\n")
+output.write(f"摩耗限界厚さ減少: {delta_h*1000:.3f} mm\n")
+output.write(f"摩耗限界体積: {V_limit:.3f} mm³\n")
+output.write(f"摩耗量（s={s_mm} mm時）: {V_wear:.3f} mm³\n")
+
+if np.isfinite(s_life):
+    output.write(f"推定寿命距離: {s_life:,.0f} mm\n")
+    output.write(f"推定寿命: 約 {ch_life:,.0f} ch\n")
+else:
+    output.write(f"押し付け力が {F_limit:.2f}N 以下です。寿命条件に達しています。\n")
+
+st.download_button(
+    label="📄 条件と結果をテキストでダウンロード",
+    data=output.getvalue(),
+    file_name="scraper_life_result.txt",
+    mime="text/plain"
+)

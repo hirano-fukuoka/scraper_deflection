@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import io
 from fpdf import FPDF
+import html
 
 # 日本語フォント設定
 matplotlib.rcParams['font.family'] = 'Noto Sans CJK JP'
@@ -93,17 +94,23 @@ if np.isfinite(s_life):
 else:
     st.warning(f"押し付け力がすでに {F_limit:.2f}N 以下です。寿命条件に達しています。")
 
-# ====== PDF出力 ======
-st.subheader("📄 入力条件と結果をPDFで出力")
-pdf = FPDF()
+# ====== PDF出力（UTF-8エンコード対応） ======
+from fpdf import FPDF
+class PDF(FPDF):
+    def header(self):
+        self.set_font("Arial", style="B", size=12)
+        self.cell(0, 10, "スクレーパ摩耗寿命予測 結果レポート", ln=True)
+        self.ln(5)
+
+    def add_multicell(self, text):
+        self.set_font("Arial", size=10)
+        for line in text.split("\n"):
+            self.multi_cell(0, 8, line)
+
+pdf = PDF()
 pdf.add_page()
-pdf.set_font("Arial", size=12)
 
-pdf.cell(200, 10, txt="スクレーパ摩耗寿命予測 結果レポート", ln=True)
-pdf.ln(5)
-
-pdf.set_font("Arial", size=10)
-pdf.multi_cell(0, 8, txt=f"""
+input_block = f"""
 【入力条件】
 スクレーパ幅 b: {b_mm} mm
 スクレーパ長さ L: {L_mm} mm
@@ -114,31 +121,35 @@ pdf.multi_cell(0, 8, txt=f"""
 総移動距離: {s_mm} mm
 1ch移動量: {move_per_cycle} mm
 押し付け力下限値: {F_limit:.2f} N
+"""
 
+result_block = f"""
 【計算結果】
 初期押し付け力: {F0:.3f} N
 摩耗限界厚さ減少: {delta_h*1000:.3f} mm
 摩耗限界体積: {V_limit:.3f} mm³
 摩耗量（s={s_mm} mm時）: {V_wear:.3f} mm³
-""")
-
+"""
 if np.isfinite(s_life):
-    pdf.multi_cell(0, 8, txt=f"推定寿命距離: {s_life:,.0f} mm\n推定寿命: 約 {ch_life:,.0f} ch")
+    result_block += f"推定寿命距離: {s_life:,.0f} mm\n推定寿命: 約 {ch_life:,.0f} ch"
 else:
-    pdf.multi_cell(0, 8, txt=f"押し付け力が {F_limit:.2f}N 以下です。寿命条件に達しています。")
+    result_block += f"押し付け力が {F_limit:.2f}N 以下です。寿命条件に達しています。"
 
-pdf.ln(5)
-pdf.set_font("Arial", style="B", size=10)
-pdf.cell(200, 10, txt="【参考：押し付け力と除去対象の目安】", ln=True)
-pdf.set_font("Arial", size=10)
-pdf.multi_cell(0, 8, txt="""
+ref_block = """
+【参考：押し付け力と除去対象の目安】
 < 0.1 N       : 微粉・ホコリなどの軽微な粉体
 0.1 - 0.5 N   : 標準的な粉末（酸化物、アルミ粉など）
 0.5 - 2.0 N   : 小粒な異物、湿気を含んだ付着物
 > 2.0 N       : 固着物、硬質異物（樹脂片、金属粉など）
-""")
+"""
 
-pdf_output = pdf.output(dest='S').encode('latin-1')
+pdf.add_multicell(input_block)
+pdf.ln(2)
+pdf.add_multicell(result_block)
+pdf.ln(2)
+pdf.add_multicell(ref_block)
+
+pdf_output = pdf.output(dest='S').encode('latin1', 'ignore')
 st.download_button(
     label="📥 PDFレポートをダウンロード",
     data=pdf_output,

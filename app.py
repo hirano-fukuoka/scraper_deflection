@@ -15,9 +15,9 @@ with st.sidebar:
     st.header("📥 入力パラメータ")
 
     # 幾何パラメータ
-    L_mm = st.number_input("スクレーパ長さ L [mm]", min_value=1.0, value=30.0)
-    b_mm = st.number_input("スクレーパ幅 b [mm]", min_value=1.0, value=10.0)
-    h_mm = st.number_input("スクレーパ厚さ h [mm]", min_value=0.1, value=3.0)
+    L_mm = st.number_input("スクレーパ長さ L [mm]", min_value=1.0, value=140.0)
+    b_mm = st.number_input("スクレーパ幅 b [mm]", min_value=1.0, value=20.0)
+    h_mm = st.number_input("スクレーパ厚さ h [mm]", min_value=0.1, value=1.5)
     E_GPa = st.number_input("ヤング率 E [GPa]", min_value=0.01, value=0.55)
     max_delta_mm = st.number_input("最大変形量 δ_max [mm]", min_value=0.1, value=2.0)
 
@@ -37,7 +37,7 @@ with st.sidebar:
 
     # 摩耗計算用パラメータ
     s_mm = st.number_input("総移動距離（累積）[mm]", min_value=1.0, value=10000.0)
-    move_per_cycle = st.number_input("1chあたりの移動量 [mm]", min_value=0.1, value=100.0)
+    move_per_cycle = st.number_input("1chあたりの移動量 [mm]", min_value=0.1, value=1000.0)
     V_limit = st.number_input("許容摩耗体積 V_limit [mm³]", min_value=0.1, value=10.0)
 
 # ======= 単位変換と初期計算 =======

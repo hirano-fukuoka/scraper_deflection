@@ -76,6 +76,70 @@ else:
     opt_delta = opt_F = delta_h_opt = V_limit_opt = s_life_opt = ch_life_opt = float('nan')
 
 st.subheader("🎯 寿命を最大化する最大たわみ量の最適化")
+
+# たわみ量と押し付け力の関係をグラフ表示
+st.subheader("📊 たわみ量と押し付け力の関係")
+delta_vals = np.linspace(0.001, max_delta_mm, 100) / 1000
+force_vals = (3 * E * I * delta_vals) / (L**3)
+
+fig, ax = plt.subplots()
+ax.plot(delta_vals * 1000, force_vals, label="押し付け力 F [N]", color='blue')
+ax.axhline(F_limit, color='red', linestyle='--', label="下限押し付け力")
+ax.set_xlabel("たわみ量 δ [mm]")
+ax.set_ylabel("押し付け力 F [N]")
+ax.grid(True)
+ax.legend()
+st.pyplot(fig)
+
+# 追加：たわみ量 vs 寿命グラフ
+st.subheader("📈 たわみ量と寿命の関係")
+s_life_curve = []
+for d in delta_vals:
+    F = (3 * E * I * d) / (L**3)
+    if F <= F_limit:
+        s_life_curve.append(0)
+    else:
+        h_new_tmp = h * (F_limit / F)**(1/3)
+        delta_h_tmp = h - h_new_tmp
+        V_limit_tmp = L * b * delta_h_tmp * 1e9
+        if V_limit_tmp <= 0:
+            s_life_curve.append(0)
+        else:
+            s_life_tmp = (V_limit_tmp * H) / (K * F)
+            s_life_curve.append(s_life_tmp)
+
+fig2, ax2 = plt.subplots()
+ax2.plot(delta_vals * 1000, s_life_curve, label="寿命距離 [mm]", color='green')
+ax2.set_xlabel("たわみ量 δ [mm]")
+ax2.set_ylabel("寿命距離 [mm]")
+ax2.grid(True)
+ax2.legend()
+st.pyplot(fig2)
+
+# 追加：押し付け力 vs 寿命グラフ
+st.subheader("📈 押し付け力と寿命の関係")
+force_vals_valid = []
+s_life_force_curve = []
+for d in delta_vals:
+    F = (3 * E * I * d) / (L**3)
+    if F <= F_limit:
+        continue
+    h_new_tmp = h * (F_limit / F)**(1/3)
+    delta_h_tmp = h - h_new_tmp
+    V_limit_tmp = L * b * delta_h_tmp * 1e9
+    if V_limit_tmp <= 0:
+        continue
+    s_life_tmp = (V_limit_tmp * H) / (K * F)
+    force_vals_valid.append(F)
+    s_life_force_curve.append(s_life_tmp)
+
+fig3, ax3 = plt.subplots()
+ax3.plot(force_vals_valid, s_life_force_curve, label="寿命距離 [mm]", color='purple')
+ax3.set_xlabel("押し付け力 F [N]")
+ax3.set_ylabel("寿命距離 [mm]")
+ax3.grid(True)
+ax3.legend()
+st.pyplot(fig3)
 if np.isnan(opt_F):
     st.warning("※ 最大変形量が小さすぎるため最適化計算はスキップされました。")
 else:

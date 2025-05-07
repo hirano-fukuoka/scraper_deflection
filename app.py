@@ -3,24 +3,41 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 
+# フォント設定（日本語対応）
 matplotlib.rcParams['font.family'] = 'Noto Sans CJK JP'
 
 st.title("スクレーパ押し付け力 vs 変形量（片持ち梁モデル）")
 
-# 入力部（同じ）
+# 🔧 入力
+L_mm = st.number_input("スクレーパ長さ L [mm]", min_value=1.0, value=30.0)
+b_mm = st.number_input("スクレーパ幅 b [mm]", min_value=1.0, value=10.0)
+h_mm = st.number_input("スクレーパ厚さ h [mm]", min_value=0.1, value=3.0)
+E_GPa = st.number_input("ヤング率 E [GPa]", min_value=0.01, value=0.55)
+max_delta_mm = st.number_input("最大変形量 δ_max [mm]", min_value=0.1, value=1.0)
 
-# 計算部（同じ）
+# 単位変換
+L = L_mm / 1000
+b = b_mm / 1000
+h = h_mm / 1000
+E = E_GPa * 1e9
 
-# グラフ表示
+# 📐 断面二次モーメント
+I = (b * h**3) / 12
+
+# 📈 データ計算
+delta_vals = np.linspace(0, max_delta_mm / 1000, 100)  # 変形量[m]
+force_vals = (3 * E * I * delta_vals) / (L**3)         # 力[N]
+
+# 📊 グラフ表示
 fig, ax = plt.subplots()
-ax.plot(delta_vals * 1000, force_vals, label="押し付け力")
+ax.plot(delta_vals * 1000, force_vals, label="押し付け力")  # mm表示
 ax.set_xlabel("変形量 δ [mm]")
 ax.set_ylabel("押し付け力 F [N]")
 ax.set_title("スクレーパ押し付け力 vs 変形量")
 ax.grid(True)
 st.pyplot(fig)
 
-# 除去対象の目安表示
+# 📘 異物除去の目安
 st.markdown("### 📘 押し付け量と異物除去の目安")
 st.markdown("""
 | 変形量（mm） | 押し付け力目安（N） | 除去対象の目安              |

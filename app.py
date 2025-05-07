@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import io
+from scipy.optimize import minimize_scalar
 
 # 日本語フォント設定
 matplotlib.rcParams['font.family'] = 'Noto Sans CJK JP'
@@ -36,13 +37,42 @@ with st.sidebar:
     move_per_cycle = st.number_input("1chあたりの移動量 [mm]", min_value=0.1, value=100.0)
     F_limit = st.number_input("押し付け力の下限値 [N]", min_value=0.01, value=0.1)
 
-# ====== 計算 ======
+# ====== 定数定義 ======
 L = L_mm / 1000
 b = b_mm / 1000
 h = h_mm / 1000
 E = E_GPa * 1e9
-delta = max_delta_mm / 1000
 I = (b * h**3) / 12
+K = material_options[material]["K"]
+H = material_options[material]["H"]
+if apply_edge_correction:
+    K *= 1.5
+
+# ====== 最適化：押し付け力最大寿命探索 ======
+def compute_life(delta):
+    delta = max(delta, 1e-6)  # avoid zero
+    F = (3 * E * I * delta) / (L**3)
+    if F <= F_limit:
+        return -1e-6
+    h_new = h * (F_limit / F) ** (1/3)
+    delta_h = h - h_new
+    V_limit = L * b * delta_h * 1e9
+    if V_limit <= 0:
+        return -1e-6
+    s_life = (V_limit * H) / (K * F)
+    return -s_life  # negative for maximization
+
+opt_result = minimize_scalar(compute_life, bounds=(0.001, max_delta_mm / 1000), method='bounded')
+opt_delta = opt_result.x
+opt_F = (3 * E * I * opt_delta) / (L**3)
+h_new_opt = h * (F_limit / opt_F) ** (1/3)
+delta_h_opt = h - h_new_opt
+V_limit_opt = L * b * delta_h_opt * 1e9
+s_life_opt = (V_limit_opt * H) / (K * opt_F)
+ch_life_opt = s_life_opt / move_per_cycle
+
+# ====== 通常計算（入力変形量） ======
+delta = max_delta_mm / 1000
 F0 = (3 * E * I * delta) / (L**3)
 
 if F0 > F_limit:
@@ -53,11 +83,6 @@ else:
     h_new = h
     delta_h = 0
     V_limit = 0
-
-K = material_options[material]["K"]
-H = material_options[material]["H"]
-if apply_edge_correction:
-    K *= 1.5
 
 V_wear = (K * F0 * s_mm) / H
 if V_limit > 0:
@@ -92,6 +117,12 @@ if np.isfinite(s_life):
 else:
     st.warning(f"押し付け力がすでに {F_limit:.2f}N 以下です。寿命条件に達しています。")
 
+st.subheader("🎯 寿命を最大化する最適押し付け量")
+st.write(f"🔧 最適たわみ量: **{opt_delta*1000:.3f} mm**")
+st.write(f"🔧 最適押し付け力: **{opt_F:.3f} N**")
+st.success(f"🧭 最大寿命距離: {s_life_opt:,.0f} mm ≈ {s_life_opt/1000:.2f} m")
+st.success(f"🧭 最大寿命: 約 {ch_life_opt:,.0f} ch")
+
 # ====== テキスト出力 ======
 st.subheader("📄 入力条件と結果のテキスト出力")
 text_output = io.StringIO()
@@ -117,6 +148,12 @@ if np.isfinite(s_life):
     text_output.write(f"推定寿命: 約 {ch_life:,.0f} ch\n")
 else:
     text_output.write(f"押し付け力が {F_limit:.2f}N 以下です。寿命条件に達しています。\n")
+
+text_output.write("\n【最適押し付け量による最大寿命】\n")
+text_output.write(f"最適たわみ量: {opt_delta*1000:.3f} mm\n")
+text_output.write(f"最適押し付け力: {opt_F:.3f} N\n")
+text_output.write(f"最大寿命距離: {s_life_opt:,.0f} mm\n")
+text_output.write(f"最大寿命: 約 {ch_life_opt:,.0f} ch\n")
 
 text_output.write("\n【参考：押し付け力と除去対象の目安】\n")
 text_output.write("< 0.1 N       : 微粉・ホコリなどの軽微な粉体\n")

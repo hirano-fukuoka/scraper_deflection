@@ -60,110 +60,26 @@ def compute_life(delta):
     if V_limit <= 0:
         return -1e-6
     s_life = (V_limit * H) / (K * F)
-    return -s_life  # negative for maximization
+    return -s_life
 
-opt_result = minimize_scalar(compute_life, bounds=(0.001, max_delta_mm / 1000), method='bounded')
-opt_delta = opt_result.x
-opt_F = (3 * E * I * opt_delta) / (L**3)
-h_new_opt = h * (F_limit / opt_F) ** (1/3)
-delta_h_opt = h - h_new_opt
-V_limit_opt = L * b * delta_h_opt * 1e9
-s_life_opt = (V_limit_opt * H) / (K * opt_F)
-ch_life_opt = s_life_opt / move_per_cycle
-
-# ====== 通常計算（入力変形量） ======
-delta = max_delta_mm / 1000
-F0 = (3 * E * I * delta) / (L**3)
-
-if F0 > F_limit:
-    h_new = h * (F_limit / F0) ** (1/3)
-    delta_h = h - h_new
-    V_limit = L * b * delta_h * 1e9
+# === 安全ガード：最大変形量が極端に小さい場合は最適化をスキップ ===
+if max_delta_mm / 1000 > 0.001:
+    opt_result = minimize_scalar(compute_life, bounds=(0.001, max_delta_mm / 1000), method='bounded')
+    opt_delta = opt_result.x
+    opt_F = (3 * E * I * opt_delta) / (L**3)
+    h_new_opt = h * (F_limit / opt_F) ** (1/3)
+    delta_h_opt = h - h_new_opt
+    V_limit_opt = L * b * delta_h_opt * 1e9
+    s_life_opt = (V_limit_opt * H) / (K * opt_F)
+    ch_life_opt = s_life_opt / move_per_cycle
 else:
-    h_new = h
-    delta_h = 0
-    V_limit = 0
-
-V_wear = (K * F0 * s_mm) / H
-if V_limit > 0:
-    s_life = (V_limit * H) / (K * F0)
-    ch_life = s_life / move_per_cycle
-else:
-    s_life = float('inf')
-    ch_life = float('inf')
-
-# ====== 表示 ======
-st.subheader("📈 初期押し付け力 vs 厚み")
-st.write(f"📌 初期押し付け力: **{F0:.3f} N**")
-st.write(f"📉 厚さが約 **{delta_h*1000:.3f} mm** 減少すると、押し付け力が {F_limit:.2f}N に低下します。")
-
-st.markdown("### 📘 押し付け力と除去能力の参考")
-st.markdown("""
-| 押し付け力 (N) | 除去対象の目安                         |
-|----------------|----------------------------------------|
-| < 0.1          | 微粉・ホコリなどの軽微な粉体           |
-| 0.1 - 0.5      | 標準的な粉末（酸化物、アルミ粉など）     |
-| 0.5 - 2.0      | 小粒な異物、湿気を含んだ付着物           |
-| > 2.0          | 固着物、硬質異物（樹脂片、金属粉など）   |
-""")
-
-st.subheader("🛠️ 摩耗寿命予測")
-st.write(f"📏 摩耗限界体積: **{V_limit:.3f} mm³**")
-st.write(f"📊 摩耗量（仮定移動距離 s = {s_mm:,.0f} mm）: **{V_wear:.3f} mm³**")
-
-if np.isfinite(s_life):
-    st.success(f"📏 推定寿命距離: {s_life:,.0f} mm（= {s_life/1000:.2f} m）")
-    st.success(f"🔄 推定寿命: 約 {ch_life:,.0f} ch（1ch = {move_per_cycle:.1f} mm）")
-else:
-    st.warning(f"押し付け力がすでに {F_limit:.2f}N 以下です。寿命条件に達しています。")
+    opt_delta = opt_F = delta_h_opt = V_limit_opt = s_life_opt = ch_life_opt = float('nan')
 
 st.subheader("🎯 寿命を最大化する最適押し付け量")
-st.write(f"🔧 最適たわみ量: **{opt_delta*1000:.3f} mm**")
-st.write(f"🔧 最適押し付け力: **{opt_F:.3f} N**")
-st.success(f"🧭 最大寿命距離: {s_life_opt:,.0f} mm ≈ {s_life_opt/1000:.2f} m")
-st.success(f"🧭 最大寿命: 約 {ch_life_opt:,.0f} ch")
-
-# ====== テキスト出力 ======
-st.subheader("📄 入力条件と結果のテキスト出力")
-text_output = io.StringIO()
-
-text_output.write("【入力条件】\n")
-text_output.write(f"スクレーパ幅 b: {b_mm} mm\n")
-text_output.write(f"スクレーパ長さ L: {L_mm} mm\n")
-text_output.write(f"スクレーパ厚さ h: {h_mm} mm\n")
-text_output.write(f"ヤング率 E: {E_GPa} GPa\n")
-text_output.write(f"最大変形量: {max_delta_mm} mm\n")
-text_output.write(f"材料: {material}（補正あり: {apply_edge_correction}）\n")
-text_output.write(f"総移動距離: {s_mm} mm\n")
-text_output.write(f"1ch移動量: {move_per_cycle} mm\n")
-text_output.write(f"押し付け力下限値: {F_limit:.2f} N\n\n")
-
-text_output.write("【計算結果】\n")
-text_output.write(f"初期押し付け力: {F0:.3f} N\n")
-text_output.write(f"摩耗限界厚さ減少: {delta_h*1000:.3f} mm\n")
-text_output.write(f"摩耗限界体積: {V_limit:.3f} mm³\n")
-text_output.write(f"摩耗量（s={s_mm} mm時）: {V_wear:.3f} mm³\n")
-if np.isfinite(s_life):
-    text_output.write(f"推定寿命距離: {s_life:,.0f} mm\n")
-    text_output.write(f"推定寿命: 約 {ch_life:,.0f} ch\n")
+if np.isnan(opt_F):
+    st.warning("※ 最大変形量が小さすぎるため最適化計算はスキップされました。")
 else:
-    text_output.write(f"押し付け力が {F_limit:.2f}N 以下です。寿命条件に達しています。\n")
-
-text_output.write("\n【最適押し付け量による最大寿命】\n")
-text_output.write(f"最適たわみ量: {opt_delta*1000:.3f} mm\n")
-text_output.write(f"最適押し付け力: {opt_F:.3f} N\n")
-text_output.write(f"最大寿命距離: {s_life_opt:,.0f} mm\n")
-text_output.write(f"最大寿命: 約 {ch_life_opt:,.0f} ch\n")
-
-text_output.write("\n【参考：押し付け力と除去対象の目安】\n")
-text_output.write("< 0.1 N       : 微粉・ホコリなどの軽微な粉体\n")
-text_output.write("0.1 - 0.5 N   : 標準的な粉末（酸化物、アルミ粉など）\n")
-text_output.write("0.5 - 2.0 N   : 小粒な異物、湿気を含んだ付着物\n")
-text_output.write("> 2.0 N       : 固着物、硬質異物（樹脂片、金属粉など）\n")
-
-st.download_button(
-    label="📥 テキストファイルで出力",
-    data=text_output.getvalue(),
-    file_name="scraper_life_result.txt",
-    mime="text/plain"
-)
+    st.write(f"🔧 最適たわみ量: **{opt_delta*1000:.3f} mm**")
+    st.write(f"🔧 最適押し付け力: **{opt_F:.3f} N**")
+    st.success(f"🧭 最大寿命距離: {s_life_opt:,.0f} mm ≈ {s_life_opt/1000:.2f} m")
+    st.success(f"🧭 最大寿命: 約 {ch_life_opt:,.0f} ch")

@@ -214,6 +214,7 @@ text_output.write(f"Max Lifetime: {ch_life_opt:,.0f} ch
 ")
 
 st.download_button(
+
     label="📥 Download Result as .txt",
     data=text_output.getvalue(),
     file_name="scraper_life_result.txt",

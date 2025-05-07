@@ -185,33 +185,19 @@ st.pyplot(fig3)
 # ====== テキスト出力 ======
 st.subheader("📄 Export Results as Text")
 text_output = io.StringIO()
-text_output.write("[Wear Prediction Result]
-")
-text_output.write(f"Material: {material}
-")
-text_output.write(f"Initial Contact Force: {F0:.3f} N
-")
-text_output.write(f"Wear Limit Thickness Loss: {delta_h*1000:.3f} mm
-")
-text_output.write(f"Wear Limit Volume: {V_limit:.3f} mm³
-")
-text_output.write(f"Wear Volume at {s_mm} mm Travel: {V_wear:.3f} mm³
-")
-text_output.write(f"Estimated Lifetime Distance: {s_life:,.0f} mm ({s_life/1000:.2f} m)
-")
-text_output.write(f"Estimated Lifetime: {ch_life:,.0f} ch
-")
-text_output.write("
-[Optimal Conditions]
-")
-text_output.write(f"Optimal Deflection: {opt_delta*1000:.3f} mm
-")
-text_output.write(f"Optimal Force: {opt_F:.3f} N
-")
-text_output.write(f"Max Lifetime Distance: {s_life_opt:,.0f} mm ({s_life_opt/1000:.2f} m)
-")
-text_output.write(f"Max Lifetime: {ch_life_opt:,.0f} ch
-")
+text_output.write("[Wear Prediction Result]\\n")
+text_output.write(f"Material: {material}\\n")
+text_output.write(f"Initial Contact Force: {F0:.3f} N\\n")
+text_output.write(f"Wear Limit Thickness Loss: {delta_h*1000:.3f} mm\\n")
+text_output.write(f"Wear Limit Volume: {V_limit:.3f} mm³\\n")
+text_output.write(f"Wear Volume at {s_mm} mm Travel: {V_wear:.3f} mm³\\n")
+text_output.write(f"Estimated Lifetime Distance: {s_life:,.0f} mm ({s_life/1000:.2f} m)\\n")
+text_output.write(f"Estimated Lifetime: {ch_life:,.0f} ch\\n")
+text_output.write("[Optimal Conditions]\\n")
+text_output.write(f"Optimal Deflection: {opt_delta*1000:.3f} mm\\n")
+text_output.write(f"Optimal Force: {opt_F:.3f} N\\n")
+text_output.write(f"Max Lifetime Distance: {s_life_opt:,.0f} mm ({s_life_opt/1000:.2f} m)\\n")
+text_output.write(f"Max Lifetime: {ch_life_opt:,.0f} ch\\n")
 
 st.download_button(
 

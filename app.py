@@ -184,28 +184,31 @@ st.pyplot(fig3)
 
 # ====== テキスト出力 ======
 st.subheader("📄 結果をテキストで出力")
+import csv
 text_output = io.StringIO()
-text_output.write("【摩耗寿命予測結果】\\n")
-text_output.write(f"材質: {material}\\n")
-text_output.write(f"初期押し付け力: {F0:.3f} N\\n")
-text_output.write(f"許容摩耗厚さ: {delta_h*1000:.3f} mm\\n")
-text_output.write(f"許容摩耗体積: {V_limit:.3f} mm³\\n")
-text_output.write(f"総移動距離 {s_mm} mm における摩耗量: {V_wear:.3f} mm³\\n")
-text_output.write(f"推定寿命距離: {s_life:,.0f} mm ({s_life/1000:.2f} m)\\n")
-text_output.write(f"推定寿命: {ch_life:,.0f} ch\\n")
+csv_writer = csv.writer(text_output)
 
-text_output.write("【最適条件】\\n")
-text_output.write(f"最適たわみ量: {opt_delta*1000:.3f} mm\\n")
-text_output.write(f"最適押し付け力: {opt_F:.3f} N\\n")
-text_output.write(f"最大寿命距離: {s_life_opt:,.0f} mm ({s_life_opt/1000:.2f} m)\\n")
-text_output.write(f"最大寿命: {ch_life_opt:,.0f} ch\\n")
+csv_writer.writerow(["項目", "値"])
+csv_writer.writerow(["材質", material])
+csv_writer.writerow(["初期押し付け力 [N]", f"{F0:.3f}"])
+csv_writer.writerow(["許容摩耗厚さ [mm]", f"{delta_h*1000:.3f}"])
+csv_writer.writerow(["許容摩耗体積 [mm³]", f"{V_limit:.3f}"])
+csv_writer.writerow(["摩耗量（{s_mm:.0f} mm 走行時）[mm³]", f"{V_wear:.3f}"])
+csv_writer.writerow(["推定寿命距離 [mm]", f"{s_life:,.0f}"])
+csv_writer.writerow(["推定寿命 [ch]", f"{ch_life:,.0f}"])
+csv_writer.writerow([])
+csv_writer.writerow(["最適たわみ量 [mm]", f"{opt_delta*1000:.3f}"])
+csv_writer.writerow(["最適押し付け力 [N]", f"{opt_F:.3f}"])
+csv_writer.writerow(["最大寿命距離 [mm]", f"{s_life_opt:,.0f}"])
+csv_writer.writerow(["最大寿命 [ch]", f"{ch_life_opt:,.0f}"])
 
 st.download_button(
 
 
+
     label="📥 結果を .txt でダウンロード",
     data=text_output.getvalue(),
-    file_name="scraper_life_result.txt",
-    mime="text/plain"
+    file_name="scraper_life_result.csv",
+    mime="text/csv"
 )
     

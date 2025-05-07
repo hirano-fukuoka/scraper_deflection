@@ -185,33 +185,20 @@ st.pyplot(fig3)
 # ====== テキスト出力 ======
 st.subheader("📄 結果をテキストで出力")
 text_output = io.StringIO()
-text_output.write("【摩耗寿命予測結果】
-")
-text_output.write(f"材質: {material}
-")
-text_output.write(f"初期押し付け力: {F0:.3f} N
-")
-text_output.write(f"許容摩耗厚さ: {delta_h*1000:.3f} mm
-")
-text_output.write(f"許容摩耗体積: {V_limit:.3f} mm³
-")
-text_output.write(f"総移動距離 {s_mm} mm における摩耗量: {V_wear:.3f} mm³
-")
-text_output.write(f"推定寿命距離: {s_life:,.0f} mm ({s_life/1000:.2f} m)
-")
-text_output.write(f"推定寿命: {ch_life:,.0f} ch
-")
-text_output.write("
-【最適条件】
-")
-text_output.write(f"最適たわみ量: {opt_delta*1000:.3f} mm
-")
-text_output.write(f"最適押し付け力: {opt_F:.3f} N
-")
-text_output.write(f"最大寿命距離: {s_life_opt:,.0f} mm ({s_life_opt/1000:.2f} m)
-")
-text_output.write(f"最大寿命: {ch_life_opt:,.0f} ch
-")
+text_output.write("【摩耗寿命予測結果】\\n")
+text_output.write(f"材質: {material}\\n")
+text_output.write(f"初期押し付け力: {F0:.3f} N\\n")
+text_output.write(f"許容摩耗厚さ: {delta_h*1000:.3f} mm\\n")
+text_output.write(f"許容摩耗体積: {V_limit:.3f} mm³\\n")
+text_output.write(f"総移動距離 {s_mm} mm における摩耗量: {V_wear:.3f} mm³\\n")
+text_output.write(f"推定寿命距離: {s_life:,.0f} mm ({s_life/1000:.2f} m)\\n")
+text_output.write(f"推定寿命: {ch_life:,.0f} ch\\n")
+
+text_output.write("【最適条件】\\n")
+text_output.write(f"最適たわみ量: {opt_delta*1000:.3f} mm\\n")
+text_output.write(f"最適押し付け力: {opt_F:.3f} N\\n")
+text_output.write(f"最大寿命距離: {s_life_opt:,.0f} mm ({s_life_opt/1000:.2f} m)\\n")
+text_output.write(f"最大寿命: {ch_life_opt:,.0f} ch\\n")
 
 st.download_button(
 

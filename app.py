@@ -213,11 +213,8 @@ csv_writer.writerow(["最大寿命距離 [mm]", f"{s_life_opt:,.0f}"])
 csv_writer.writerow(["最大寿命 [ch]", f"{ch_life_opt:,.0f}"])
 
 st.download_button(
-
-
-
-    label="📥 結果を .txt でダウンロード",
-    data=text_output.getvalue(),
+    label="📥 結果を .csv でダウンロード",
+    data=text_output.getvalue().encode('utf-8-sig').decode('utf-8'),
     file_name="scraper_life_result.csv",
     mime="text/csv"
 )
